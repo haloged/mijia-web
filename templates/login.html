@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}扫码登录{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:60px auto;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.08);text-align:center">
+    <h2>🔐 米家账号登录</h2>
+    <p style="color:#666;margin-bottom:1.5rem">请使用米家APP扫描下方二维码</p>
+    
+    <div id="qr-box" style="display:none;margin:1.5rem auto">
+        <img id="qr-img" src="" style="width:240px;height:240px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+        <p id="qr-msg" style="margin-top:10px;color:#3b82f6;font-weight:500">⏳ 正在生成二维码...</p>
+    </div>
+    
+    <button id="btn-start" class="btn" onclick="startLogin()">📱 获取二维码</button>
+</div>
+<div id="manual-verify-box" style="display:none; margin-top:1rem; text-align:center">
+    <p style="color:#666;font-size:0.9rem">如果扫码后未自动跳转，请点击下方按钮手动验证：</p>
+    <button onclick="manualVerify()" class="btn btn-secondary" style="background:#6b7280">
+        🔍 手动验证登录
+    </button>
+</div>
+
+<script>
+let pollTimer = null;
+
+function startLogin() {
+    const btn = document.getElementById('btn-start');
+    btn.disabled = true;
+    btn.innerHTML = '🔄 生成中...';
+    
+    fetch('/api/login/start', {method: 'POST'})
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === 'success') {
+                window.location.href = '/';
+                return;
+            }
+            if (res.qr_url) {
+                document.getElementById('qr-box').style.display = 'block';
+                document.getElementById('qr-img').src = res.qr_url;
+                document.getElementById('qr-msg').textContent = res.msg || '请扫码...';
+                btn.style.display = 'none';
+                pollTimer = setInterval(checkStatus, 1500);
+            } else if (res.status === 'error') {
+                alert('❌ ' + res.msg);
+                btn.disabled = false;
+                btn.innerHTML = '🔄 重试';
+            }
+        })
+        .catch(err => {
+            alert('🌐 网络请求失败');
+            btn.disabled = false;
+        });
+}
+
+function checkStatus() {
+    fetch('/api/login/status')
+        .then(r => r.json())
+        .then(res => {
+            const msgEl = document.getElementById('qr-msg');
+            if (res.msg) msgEl.textContent = res.msg;
+            
+            if (res.status === 'success') {
+                clearInterval(pollTimer);
+                msgEl.style.color = '#10b981';
+                setTimeout(() => window.location.href = '/', 800);
+            } else if (res.status === 'error') {
+                clearInterval(pollTimer);
+                msgEl.style.color = '#ef4444';
+                setTimeout(() => location.reload(), 1500);
+            }
+        });
+}
+
+function manualVerify() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '🔄 验证中...';
+    
+    fetch('/api/login/verify', {method: 'POST'})
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === 'success') {
+                document.getElementById('qr-msg').textContent = '✅ ' + res.msg;
+                document.getElementById('qr-msg').style.color = '#10b981';
+                setTimeout(() => window.location.href = '/', 800);
+            } else {
+                alert('❌ ' + res.msg + '\n\n提示：请确认已在终端完成扫码，且认证文件路径可写:\n' + (res.auth_path || '未知'));
+                btn.disabled = false;
+                btn.innerHTML = '🔍 手动验证登录';
+            }
+        });
+}
+
+// 在 checkStatus 函数中，如果状态为 error 且 msg 包含"过期"，显示手动验证按钮
+function checkStatus() {
+    fetch('/api/login/status')
+        .then(r => r.json())
+        .then(res => {
+            const msgEl = document.getElementById('qr-msg');
+            if (res.msg) msgEl.textContent = res.msg;
+            if (res.auth_path) console.log('📁 认证文件路径:', res.auth_path);
+            
+            if (res.status === 'success') {
+                clearInterval(pollTimer);
+                msgEl.style.color = '#10b981';
+                setTimeout(() => window.location.href = '/', 800);
+            } else if (res.status === 'error') {
+                clearInterval(pollTimer);
+                msgEl.style.color = '#ef4444';
+                // 如果是过期或网络错误，显示手动验证按钮
+                if (res.msg.includes('过期') || res.msg.includes('异常')) {
+                    document.getElementById('manual-verify-box').style.display = 'block';
+                }
+            }
+        });
+}
+</script>
+<style>
+.btn { width:100%; padding:0.9rem; background:#3b82f6; color:#fff; border:none; border-radius:10px; font-size:1rem; cursor:pointer; transition:0.2s }
+.btn:hover:not(:disabled) { background:#2563eb }
+.btn:disabled { opacity:0.6; cursor:not-allowed }
+</style>
+{% endblock %}

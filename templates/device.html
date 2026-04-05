@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} - 控制{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="device-header">
+        <a href="{{ url_for('index') }}" style="color:var(--text-sub); text-decoration:none; float:left;">← 返回</a>
+        <div style="clear:both;"></div>
+        <div style="font-size: 3rem; margin: 1rem 0;">💡</div>
+        <h2>{{ name }}</h2>
+        <div class="device-status-badge" id="status-badge">连接中...</div>
+    </div>
+
+    <!-- 1. 电源开关 -->
+    <div class="control-group" id="control-power">
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="power-switch">
+                <span class="slider-round"></span>
+            </label>
+        </div>
+        <div style="text-align:center; color: var(--text-sub); font-size:0.9rem;" id="power-text">
+            点击开关
+        </div>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #eee; margin: 1.5rem 0;">
+
+    <!-- 2. 亮度控制 -->
+    <div class="control-group" id="control-brightness" style="display:none;">
+        <div class="control-label">
+            <span>☀️ 亮度</span>
+            <span id="brightness-val">0%</span>
+        </div>
+        <input type="range" id="brightness-slider" min="1" max="100" value="50" class="slider-disabled" disabled>
+    </div>
+
+    <!-- 3. 色温控制 -->
+    <div class="control-group" id="control-ct" style="display:none;">
+        <div class="control-label">
+            <span>🌡️ 色温</span>
+            <span id="ct-val">4000K</span>
+        </div>
+        <input type="range" id="ct-slider" min="2700" max="6500" step="100" value="4000" class="slider-disabled" disabled>
+    </div>
+
+    <!-- 4. 快捷场景 -->
+    <div class="control-group">
+        <div class="control-label"><span>🚀 快捷模式</span></div>
+        <div class="quick-actions">
+            <button class="action-btn" onclick="setScene('reading')">📖 阅读</button>
+            <button class="action-btn" onclick="setScene('movie')">🎬 观影</button>
+            <button class="action-btn" onclick="setScene('night')">🌙 夜灯</button>
+        </div>
+    </div>
+</div>
+
+<!-- 状态数据初始化 -->
+<script>
+    // 后端传来的初始状态
+    const initialState = {{ props | tojson }};
+    const deviceDid = "{{ did }}";
+    let currentOn = initialState.on || false;
+</script>
+
+<!-- 核心控制脚本 -->
+<script src="{{ url_for('static', filename='js/control.js') }}"></script>
+{% endblock %}

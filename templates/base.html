@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}米家控制台{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>🏠 米家 Web 控制台</h1>
+        {% if session.logged_in %}
+        <a href="{{ url_for('logout') }}" class="btn">退出</a>
+        {% endif %}
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <script src="{{ url_for('static', filename='js/control.js') }}"></script>
+</body>
+</html>

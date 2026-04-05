@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}我的家 - 米家灯具控制台{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+    <h2>🏠 设备列表</h2>
+    <button onclick="location.reload()" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🔄</button>
+</div>
+
+<div class="device-grid">
+    {% for dev in devices %}
+    <a href="{{ url_for('device_detail', did=dev.did) }}" class="device-card {% if not dev.online %}offline{% endif %}">
+        <div class="device-icon">
+            {% if 'light' in dev.model or 'lamp' in dev.model or 'yeelink' in dev.model %}
+                💡
+            {% elif 'plug' in dev.model or 'socket' in dev.model %}
+                🔌
+            {% elif 'fan' in dev.model %}
+                🌀
+            {% elif 'camera' in dev.model %}
+                📷
+            {% else %}
+                📦
+            {% endif %}
+        </div>
+        <div style="width:100%; overflow:hidden;">
+            <p class="device-name">{{ dev.name }}</p>
+            <p class="device-room">📍 {{ dev.room }}</p>
+            <p class="device-status {% if dev.online %}online{% else %}offline{% endif %}">
+                <span class="status-dot"></span>{{ dev.room }}{% if dev.online %} 在线{% else %} 离线{% endif %}
+            </p>
+        </div>
+    </a>
+    {% else %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-sub);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+        <p>未发现设备<br><small>请先在米家 APP 添加设备</small></p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
